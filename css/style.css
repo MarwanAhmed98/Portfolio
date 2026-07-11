@@ -1,9 +1,10 @@
 /* =========================================================
    Marwan Ahmed — Portfolio (Modern "Code Editor" redesign)
+   نسخة معدّلة: Full Responsive + تحسينات خاصة بشاشات الموبايل
    ========================================================= */
 
 :root {
-  /* --- Palette (editor-inspired, not a single flat dark+accent) --- */
+  /* --- Palette (editor-inspired) --- */
   --bg: #0b0e14;
   --bg-soft: #0f131b;
   --surface: #131720;
@@ -16,15 +17,10 @@
   --text-faint: #566073;
 
   --accent-blue: #6bb7ff;
-  /* functions / links   */
   --accent-green: #8fd19e;
-  /* strings / success    */
   --accent-amber: #f2b866;
-  /* tags / attention      */
   --accent-purple: #b79ef0;
-  /* keywords              */
   --accent-red: #f28b82;
-  /* close buttons         */
 
   --radius: 10px;
   --radius-sm: 6px;
@@ -32,14 +28,27 @@
   --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   --shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.6);
+
+  /* حواف الشاشات ذات الـ notch (آيفون وغيره) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  /* يمنع الفلاش الرمادي عند الضغط على اللينكات/الأزرار في الموبايل */
 }
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  width: 100%;
+  /* حماية مطلقة ضد أي سكرول أفقي للموقع */
+  -webkit-text-size-adjust: 100%;
+  /* يمنع سفاري آيفون من تكبير الخط تلقائياً عند تدوير الشاشة */
 }
 
 body {
@@ -50,6 +59,10 @@ body {
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  width: 100%;
+  min-width: 320px;
+  /* أقل عرض مدعوم رسمياً (أصغر آيفون/أندرويد شائع) */
 }
 
 /* subtle grid texture on the page background */
@@ -62,6 +75,7 @@ body.modern {
 
 img {
   max-width: 100%;
+  height: auto;
   display: block;
 }
 
@@ -72,6 +86,8 @@ a {
 
 button {
   font-family: inherit;
+  touch-action: manipulation;
+  /* يمنع تأخير الـ 300ms ودبل تاب زووم في الموبايل */
 }
 
 ::selection {
@@ -79,21 +95,26 @@ button {
   color: #06090f;
 }
 
+/* --- الحاوية الرئيسية حُسن توزيعها على الشاشات الصغيرة --- */
 .m-container {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 0 clamp(20px, 5vw, 48px);
+  padding: 0 clamp(16px, 4vw, 40px);
+  padding-left: calc(clamp(16px, 4vw, 40px) + var(--safe-left));
+  padding-right: calc(clamp(16px, 4vw, 40px) + var(--safe-right));
 }
 
 .m-eyebrow {
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: clamp(11.5px, 2vw, 13px);
   color: var(--accent-green);
   letter-spacing: 0.02em;
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  /* لو النص طويل على شاشة ضيقة جداً يلف بدل ما يقصّ */
 }
 
 .m-eyebrow .ln {
@@ -103,10 +124,14 @@ button {
 .m-heading {
   font-family: var(--sans);
   font-weight: 800;
-  font-size: clamp(28px, 4vw, 40px);
+  font-size: clamp(22px, 6.5vw, 38px);
+  /* أكثر مرونة وضغطاً في الموبايل، خصوصاً الشاشات الأصغر من 360px */
   letter-spacing: -0.02em;
-  margin: 0 0 34px;
+  margin: 0 0 28px;
   color: var(--text);
+  line-height: 1.25;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .m-heading .brace {
@@ -119,7 +144,7 @@ button {
 }
 
 .m-section {
-  padding: 100px 0;
+  padding: clamp(50px, 10vw, 90px) 0;
   border-bottom: 1px solid var(--border-soft);
 }
 
@@ -128,7 +153,7 @@ button {
 }
 
 /* =========================================================
-   Top bar — editor chrome / file tabs act as the nav
+   Top bar — حماية الـ Bar العلوي من التداخل في الهواتف الضيقة
    ========================================================= */
 .m-topbar {
   position: fixed;
@@ -136,28 +161,43 @@ button {
   left: 0;
   right: 0;
   z-index: 100;
-  background: rgba(11, 14, 20, 0.85);
-  backdrop-filter: blur(10px);
+  background: rgba(11, 14, 20, 0.9);
+  /* تقليل الشفافية قليلاً لراحة العين أثناء الاسكرول */
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
+  padding-top: var(--safe-top);
+  /* دعم شاشات الـ notch حتى لا يتغطى الـ topbar بالكاميرا/الحواف */
 }
 
 .m-titlebar {
   display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: space-between;
+  gap: 12px;
   height: 44px;
-  padding: 0 clamp(16px, 4vw, 32px);
+  padding: 0 clamp(12px, 3vw, 24px);
+  padding-left: calc(clamp(12px, 3vw, 24px) + var(--safe-left));
+  padding-right: calc(clamp(12px, 3vw, 24px) + var(--safe-right));
   border-bottom: 1px solid var(--border-soft);
+}
+
+.m-titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  /* أساسي لتفعيل التجاوب داخل الـ Flex */
 }
 
 .m-dots {
   display: flex;
-  gap: 7px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .m-dots span {
-  width: 11px;
-  height: 11px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   display: inline-block;
 }
@@ -176,8 +216,13 @@ button {
 
 .m-titlebar-name {
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* يمنع الاسم من كسر السطر في الموبايل */
+  min-width: 0;
 }
 
 .m-titlebar-name b {
@@ -189,27 +234,37 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 46px;
-  padding: 0 clamp(16px, 4vw, 32px);
+  height: 42px;
+  padding: 0 clamp(12px, 3vw, 24px);
+  padding-left: calc(clamp(12px, 3vw, 24px) + var(--safe-left));
+  padding-right: calc(clamp(12px, 3vw, 24px) + var(--safe-right));
 }
 
 .m-tabs {
   display: flex;
   height: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.m-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .m-tab {
   font-family: var(--mono);
-  font-size: 13.5px;
+  font-size: 13px;
   color: var(--text-muted);
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 18px;
+  padding: 0 16px;
   border-right: 1px solid var(--border-soft);
   height: 100%;
   transition: color .18s ease, background .18s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .m-tab .dot {
@@ -217,7 +272,6 @@ button {
   height: 6px;
   border-radius: 50%;
   background: var(--text-faint);
-  transition: background .18s ease;
 }
 
 .m-tab:hover {
@@ -256,16 +310,13 @@ button {
   background: none;
   border: none;
   cursor: pointer;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
+  /* حجم لمس مريح (Apple/Google التوصية 44px) بدل 32px */
   align-items: center;
   justify-content: center;
-}
-
-.m-burger span,
-.m-burger::before,
-.m-burger::after {
-  content: '';
+  padding: 0;
+  flex-shrink: 0;
 }
 
 .m-burger-icon {
@@ -273,7 +324,6 @@ button {
   height: 2px;
   background: var(--text-muted);
   position: relative;
-  transition: background .2s ease;
 }
 
 .m-burger-icon::before,
@@ -284,15 +334,14 @@ button {
   width: 18px;
   height: 2px;
   background: var(--text-muted);
-  transition: transform .2s ease;
 }
 
 .m-burger-icon::before {
-  top: -6px;
+  top: -5px;
 }
 
 .m-burger-icon::after {
-  top: 6px;
+  top: 5px;
 }
 
 .m-mobile-menu {
@@ -300,7 +349,11 @@ button {
   flex-direction: column;
   background: var(--bg-soft);
   border-bottom: 1px solid var(--border);
-  padding: 8px 0;
+  padding: 4px 0;
+  width: 100%;
+  max-height: calc(100vh - 86px - var(--safe-top));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .m-mobile-menu.is-open {
@@ -311,12 +364,12 @@ button {
   font-family: var(--mono);
   font-size: 14px;
   color: var(--text-muted);
-  padding: 12px clamp(20px, 5vw, 48px);
+  padding: 14px clamp(16px, 4vw, 32px);
   border-bottom: 1px solid var(--border-soft);
-}
-
-.m-mobile-menu a:active {
-  color: var(--accent-blue);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  /* منطقة لمس مريحة لكل عنصر في القائمة */
 }
 
 @media (max-width: 780px) {
@@ -330,21 +383,46 @@ button {
 }
 
 /* =========================================================
-   Hero
+   Hero — تحسين المحاذاة والمسافات والترتيب
    ========================================================= */
 .m-hero {
-  padding: 160px 0 110px;
+  padding: clamp(110px, 14vw, 150px) 0 clamp(50px, 8vw, 90px);
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 56px;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: clamp(24px, 5vw, 48px);
   align-items: center;
+}
+
+.m-hero-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
 }
 
 @media (max-width: 900px) {
   .m-hero {
     grid-template-columns: 1fr;
-    padding: 130px 0 70px;
-    gap: 40px;
+  }
+
+  .m-hero-photo-wrap {
+    order: -1;
+    /* الصورة فوق الكود لمظهر احترافي في الموبايل */
+    max-width: clamp(220px, 60vw, 380px);
+    /* عرض مرن يتغير بسلاسة مع عرض الشاشة بدل قفزات مفاجئة بين breakpoints */
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .m-hero {
+    padding-top: clamp(96px, 26vw, 130px);
+    /* أصغر الشاشات لسه محتاجة مسافة كافية تحت التوب بار بدون فراغ زايد */
+  }
+
+  .m-hero-photo-wrap {
+    max-width: clamp(180px, 55vw, 260px);
   }
 }
 
@@ -354,34 +432,47 @@ button {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
+  width: 100%;
 }
 
 .m-editor-pane-head {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--border);
   background: var(--surface-2);
 }
 
-.m-editor-pane-head .m-titlebar-name {
-  color: var(--text-faint);
-}
-
 .m-code {
   font-family: var(--mono);
-  font-size: clamp(13.5px, 1.6vw, 16px);
-  padding: 26px 24px 30px;
-  line-height: 1.85;
+  font-size: clamp(12px, 3.2vw, 14.5px);
+  /* حجم خط متزن جداً لا يكسر الشاشات */
+  padding: clamp(14px, 4vw, 24px);
+  line-height: 1.75;
   overflow-x: auto;
+  white-space: pre;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+  /* سكرول ناعم جداً على الآيفون */
+}
+
+/* تحسين السكرول بار الداخلي للأكواد عشان شكله يكون لطيف ومدمج */
+.m-code::-webkit-scrollbar {
+  height: 5px;
+}
+
+.m-code::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
 }
 
 .m-code .ln {
   display: inline-block;
-  width: 22px;
+  width: 20px;
   color: var(--text-faint);
   user-select: none;
+  flex-shrink: 0;
 }
 
 .m-code .kw {
@@ -415,7 +506,7 @@ button {
 
 .m-cursor {
   display: inline-block;
-  width: 8px;
+  width: 7px;
   height: 1.1em;
   background: var(--accent-blue);
   vertical-align: text-bottom;
@@ -423,34 +514,40 @@ button {
   margin-left: 2px;
 }
 
-@keyframes blink {
-  50% {
-    opacity: 0;
-  }
-}
-
-.m-hero-role {
-  min-height: 1.4em;
-  color: var(--accent-green);
-}
-
 .m-hero-cta {
   display: flex;
-  gap: 14px;
-  margin-top: 30px;
   flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (max-width: 480px) {
+  .m-hero-cta {
+    display: grid;
+    grid-template-columns: 1fr;
+    /* كل زرار في سطر مستقل لسهولة الضغط */
+    gap: 10px;
+    width: 100%;
+  }
+
+  .m-hero-cta .m-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .m-btn {
   font-family: var(--mono);
-  font-size: 14px;
+  font-size: 13.5px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 13px 22px;
+  padding: 12px 20px;
+  min-height: 44px;
+  /* منطقة لمس مريحة على الموبايل */
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+  transition: all .18s ease;
+  justify-content: center;
 }
 
 .m-btn:hover {
@@ -464,27 +561,14 @@ button {
   font-weight: 600;
 }
 
-.m-btn--solid:hover {
-  background: #82c3ff;
-}
-
 .m-btn--ghost {
   color: var(--text-muted);
-}
-
-.m-btn--ghost:hover {
-  color: var(--text);
-  border-color: var(--text-faint);
-}
-
-.m-btn--ghost .prompt {
-  color: var(--accent-green);
 }
 
 .m-hero-photo-wrap {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 
 .m-photo-window {
@@ -497,46 +581,55 @@ button {
 
 .m-photo-window img {
   width: 100%;
-  aspect-ratio: 4 / 4.3;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
-  filter: saturate(0.92) contrast(1.02);
 }
 
 .m-photo-caption {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-faint);
-  padding: 10px 16px;
+  padding: 8px 14px;
   border-top: 1px solid var(--border);
 }
 
 .m-socials {
   display: flex;
-  gap: 10px;
+  gap: 8px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .m-socials {
+    justify-content: center;
+  }
+
+  /* توسيط السوشيال ميديا في الموبايل */
 }
 
 .m-social {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
+  /* رجّعتها لحجم الصندوق الأصلي، بس بمنطقة لمس كافية لأن المسافة (gap) بينها 8px */
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text-muted);
-  transition: all .18s ease;
+  flex-shrink: 0;
 }
 
-.m-social:hover {
-  color: var(--bg);
-  background: var(--accent-green);
-  border-color: var(--accent-green);
-  transform: translateY(-2px);
-}
-
-.m-social svg {
-  width: 18px;
-  height: 18px;
+.m-social svg,
+.m-social img,
+.m-social i {
+  width: 16px;
+  height: 16px;
+  /* تثبيت حجم الأيقونة الداخلية بدل ما تكبر مع الصندوق أو تاخد حجمها الطبيعي من الملف */
+  max-width: 16px;
+  max-height: 16px;
+  object-fit: contain;
 }
 
 /* =========================================================
@@ -545,116 +638,96 @@ button {
 .m-about-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 50px;
+  gap: clamp(24px, 5vw, 44px);
 }
 
 @media (max-width: 860px) {
   .m-about-grid {
     grid-template-columns: 1fr;
-    gap: 36px;
   }
 }
 
 .m-about-para {
   color: var(--text-muted);
-  font-size: 16.5px;
-  margin: 0 0 18px;
+  font-size: clamp(15px, 2vw, 16px);
+  margin: 0 0 16px;
+  overflow-wrap: break-word;
 }
 
-.m-about-para strong {
-  color: var(--text);
-  font-weight: 600;
-}
-
-.m-about-para .str {
-  color: var(--accent-green);
+.m-about-cta {
+  margin-top: 8px;
 }
 
 .m-skill-import {
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: clamp(11.5px, 2.5vw, 13px);
   color: var(--text-faint);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 14px 16px;
-  margin-bottom: 22px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
   overflow-x: auto;
   white-space: pre;
-}
-
-.m-skill-import .kw {
-  color: var(--accent-purple);
-}
-
-.m-skill-import .prop {
-  color: var(--accent-blue);
-}
-
-.m-skill-import .str {
-  color: var(--accent-green);
+  -webkit-overflow-scrolling: touch;
 }
 
 .m-skills {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .m-skill-chip {
   font-family: var(--mono);
-  font-size: 13px;
-  padding: 9px 14px;
+  font-size: 12px;
+  padding: 8px 12px;
+  min-height: 32px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-muted);
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  transition: border-color .18s ease, color .18s ease, transform .18s ease;
-}
-
-.m-skill-chip:hover {
-  transform: translateY(-2px);
-  color: var(--text);
-}
-
-.m-skill-chip .dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
-
-.m-about-cta {
-  margin-top: 30px;
+  gap: 6px;
 }
 
 /* =========================================================
-   Projects
+   Projects — حل مشكلة الفلاتر والـ Cards المتداخلة
    ========================================================= */
 .m-filter-row {
   display: flex;
-  gap: 10px;
+  gap: 6px;
   flex-wrap: wrap;
-  margin-bottom: 40px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 480px) {
+  .m-filter-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    /* زرين في كل صف في الموبايلات الصغيرة عشان الشكل ما يتلخبطش */
+    width: 100%;
+  }
+
+  .m-filter-btn {
+    text-align: center;
+    justify-content: center;
+  }
 }
 
 .m-filter-btn {
   font-family: var(--mono);
-  font-size: 13px;
-  padding: 9px 16px;
+  font-size: 12px;
+  padding: 10px 12px;
+  min-height: 40px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: all .18s ease;
-}
-
-.m-filter-btn:hover {
-  color: var(--text);
-  border-color: var(--text-faint);
+  display: inline-flex;
+  align-items: center;
 }
 
 .m-filter-btn.is-active {
@@ -667,7 +740,7 @@ button {
 .m-project-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 26px;
+  gap: 20px;
 }
 
 @media (max-width: 980px) {
@@ -676,10 +749,12 @@ button {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 600px) {
   .m-project-grid {
     grid-template-columns: 1fr;
   }
+
+  /* كارت واحد صريح وواضح */
 }
 
 .m-card {
@@ -689,66 +764,54 @@ button {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
-}
-
-.m-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--text-faint);
-  box-shadow: var(--shadow);
+  width: 100%;
 }
 
 .m-card-head {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
   background: var(--surface-2);
-}
-
-.m-card-head .m-dots span {
-  width: 8px;
-  height: 8px;
+  /* نفس هيدر نافذة الإديتور في الهيرو، عشان الكارت يبان زي ملف كود */
 }
 
 .m-card-head-name {
   font-family: var(--mono);
   font-size: 11.5px;
   color: var(--text-faint);
-  margin-left: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .m-card-img-cont {
-  aspect-ratio: 16/10;
+  aspect-ratio: 16 / 10;
   overflow: hidden;
-  background: var(--bg-soft);
 }
 
 .m-card-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform .35s ease;
-}
-
-.m-card:hover .m-card-img {
-  transform: scale(1.05);
 }
 
 .m-card-body {
-  padding: 20px 20px 22px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   flex: 1;
 }
 
 .m-card-title {
   font-family: var(--mono);
-  font-size: 15.5px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text);
+  line-height: 1.4;
   margin: 0;
 }
 
@@ -758,10 +821,10 @@ button {
 }
 
 .m-card-desc {
-  font-size: 14px;
+  font-size: 13.5px;
   color: var(--text-muted);
+  line-height: 1.55;
   margin: 0;
-  line-height: 1.65;
   flex: 1;
 }
 
@@ -775,41 +838,34 @@ button {
   font-family: var(--mono);
   font-size: 10.5px;
   padding: 4px 9px;
-  border-radius: 5px;
-  background: var(--bg-soft);
+  border-radius: 999px;
   border: 1px solid var(--border);
   color: var(--text-faint);
+  background: var(--bg-soft);
 }
 
 .m-card-link {
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--accent-blue);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
   margin-top: 4px;
-  transition: gap .18s ease;
-}
-
-.m-card-link:hover {
-  gap: 10px;
+  display: inline-block;
+  min-height: 24px;
 }
 
 /* =========================================================
-   Contact
+   Contact & Terminal
    ========================================================= */
 .m-contact-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 50px;
-  align-items: start;
+  gap: clamp(24px, 5vw, 40px);
 }
 
 @media (max-width: 860px) {
   .m-contact-grid {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 32px;
   }
 }
 
@@ -819,36 +875,20 @@ button {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
+  width: 100%;
 }
 
 .m-terminal-head {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--border);
   background: var(--surface-2);
 }
 
 .m-terminal-body {
-  padding: 26px 24px 28px;
-}
-
-.m-field {
-  margin-bottom: 20px;
-}
-
-.m-field label {
-  display: block;
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--accent-green);
-  margin-bottom: 8px;
-}
-
-.m-field label::before {
-  content: '$ ';
-  color: var(--text-faint);
+  padding: clamp(16px, 4vw, 24px);
 }
 
 .m-field input,
@@ -859,10 +899,46 @@ button {
   border-radius: var(--radius-sm);
   color: var(--text);
   font-family: var(--mono);
-  font-size: 14px;
-  padding: 12px 14px;
+  font-size: max(16px, 13.5px);
+  /* 16px كحد أدنى يمنع سفاري آيفون من عمل زووم تلقائي عند التركيز على الحقل */
+  padding: 12px 12px;
+  -webkit-appearance: none;
+}
+
+@media (min-width: 640px) {
+
+  .m-field input,
+  .m-field textarea {
+    font-size: 13.5px;
+    /* على الشاشات الأكبر من الموبايل نرجع للحجم الأصلي المصمم عليه */
+  }
+}
+
+#contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.m-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.m-field label {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.m-field textarea {
   resize: vertical;
-  transition: border-color .18s ease;
+  min-height: 110px;
+  font-family: var(--sans);
+  line-height: 1.5;
 }
 
 .m-field input:focus,
@@ -871,30 +947,16 @@ button {
   border-color: var(--accent-blue);
 }
 
-.m-field input::placeholder,
-.m-field textarea::placeholder {
-  color: var(--text-faint);
-}
-
 .m-form-status {
-  margin: 14px 0 0;
   font-family: var(--mono);
-  font-size: 13px;
-  min-height: 18px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin: 0;
+  min-height: 16px;
 }
 
-.m-form-status.is-success {
+.prompt {
   color: var(--accent-green);
-}
-
-.m-form-status.is-error {
-  color: var(--accent-red);
-}
-
-.m-contact-info {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
 }
 
 .m-contact-info-row {
@@ -907,46 +969,70 @@ button {
   width: 40px;
   height: 40px;
   flex-shrink: 0;
+  /* أهم سطر: من غير flex-shrink:0 ممكن الأيقونة تتمدد داخل flex row */
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  color: var(--accent-purple);
+  background: var(--surface);
+  color: var(--accent-blue);
 }
 
 .m-contact-info-icon svg {
   width: 18px;
   height: 18px;
+  /* السبب الأساسي في تكبّر الأيقونة: الـ svg هنا معهوش أي مقاس محدد في الأصل
+     فكان بياخد حجمه الافتراضي (بيختلف حسب المتصفح، وممكن يبقى كبير جداً) */
+  max-width: 18px;
+  max-height: 18px;
 }
 
 .m-contact-info-label {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--text-faint);
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 }
 
 .m-contact-info-value {
-  color: var(--text);
-  font-size: 15px;
+  font-size: 14.5px;
+  word-break: break-word;
+  /* حماية تامة للإيميلات الطويلة من تخطي البوكس */
+}
+
+@media (max-width: 380px) {
+  .m-contact-info-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .m-contact-info-icon svg {
+    width: 16px;
+    height: 16px;
+    max-width: 16px;
+    max-height: 16px;
+  }
 }
 
 /* =========================================================
    Footer
    ========================================================= */
 .m-footer {
-  padding: 34px 0 44px;
+  padding: 24px 0 calc(34px + var(--safe-bottom));
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
+  border-top: 1px solid var(--border-soft);
 }
 
 .m-footer-text {
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--text-faint);
 }
 
@@ -954,138 +1040,74 @@ button {
   color: var(--text-faint);
 }
 
+@media (max-width: 600px) {
+  .m-footer {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+}
+
 /* =========================================================
-   Scroll reveal
+   Case studies
    ========================================================= */
-.m-reveal {
-  opacity: 0;
-  transform: translateY(18px);
-  transition: opacity .6s ease, transform .6s ease;
+.m-cs-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: clamp(24px, 5vw, 44px);
 }
 
-.m-reveal.is-visible {
-  opacity: 1;
-  transform: none;
+@media (max-width: 860px) {
+  .m-cs-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
+/* =========================================================
+   Extra small phones (≤380px) — طبقة تشديد إضافية
+   ========================================================= */
+@media (max-width: 380px) {
+  .m-container {
+    padding-left: calc(14px + var(--safe-left));
+    padding-right: calc(14px + var(--safe-right));
+  }
+
+  .m-titlebar-name {
+    font-size: 11px;
+  }
+
+  .m-btn {
+    font-size: 12.5px;
+    padding: 11px 14px;
+  }
+
+  .m-social {
+    width: 36px;
+    height: 36px;
+  }
+
+  .m-social svg,
+  .m-social img,
+  .m-social i {
+    width: 15px;
+    height: 15px;
+    max-width: 15px;
+    max-height: 15px;
+  }
+}
+
+/* دعم أوضاع تفضيل تقليل الحركة (accessibility) */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
-  }
-
-  .m-reveal {
-    opacity: 1;
-    transform: none;
-    transition: none;
   }
 
   .m-cursor {
     animation: none;
   }
 
-  .m-card,
-  .m-card-img,
-  .m-btn {
-    transition: none;
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
-}
-
-/* =========================================================
-   Case study pages
-   ========================================================= */
-.m-cs-hero {
-  padding: 150px 0 60px;
-}
-
-.m-cs-back {
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--text-faint);
-  display: inline-block;
-  margin-bottom: 22px;
-  transition: color .18s ease;
-}
-
-.m-cs-back:hover {
-  color: var(--accent-blue);
-}
-
-.m-cs-desc {
-  color: var(--text-muted);
-  font-size: 16.5px;
-  max-width: 640px;
-  margin: -18px 0 0;
-}
-
-.m-cs-grid {
-  display: grid;
-  grid-template-columns: 1.6fr 1fr;
-  gap: 56px;
-  align-items: start;
-}
-
-@media (max-width: 860px) {
-  .m-cs-grid {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-}
-
-.m-cs-content {
-  color: var(--text-muted);
-}
-
-.m-cs-subhead {
-  font-family: var(--mono);
-  font-size: 14px;
-  color: var(--accent-purple);
-  margin: 26px 0 10px;
-}
-
-.m-cs-subhead:first-child {
-  margin-top: 0;
-}
-
-.m-cs-list {
-  list-style: none;
-  margin: 0 0 4px;
-  padding: 0;
-}
-
-.m-cs-list li {
-  position: relative;
-  padding-left: 20px;
-  margin-bottom: 9px;
-  font-size: 14.5px;
-  line-height: 1.6;
-}
-
-.m-cs-bullet {
-  position: absolute;
-  left: 0;
-  top: 8px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent-green);
-}
-
-.m-cs-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 70px;
-  padding-top: 30px;
-  border-top: 1px solid var(--border-soft);
-}
-
-/* focus visibility */
-a:focus-visible,
-button:focus-visible,
-input:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid var(--accent-blue);
-  outline-offset: 2px;
 }
