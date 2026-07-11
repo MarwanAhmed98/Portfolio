@@ -118,16 +118,62 @@ document.addEventListener('DOMContentLoaded', () => {
   const yearEl = document.querySelector('.m-year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-  /* ---------- contact form (no backend wired yet) ---------- */
+  /* ---------- contact form (Web3Forms) ---------- */
   const form = document.querySelector('.m-terminal-body form');
   if (form) {
-    form.addEventListener('submit', (e) => {
+    const statusEl = form.querySelector('.m-form-status');
+    const btn = form.querySelector('button[type="submit"]');
+    const originalBtnText = btn.textContent;
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn = form.querySelector('button[type="submit"]');
-      const original = btn.textContent;
-      btn.textContent = '$ message-sent ✓';
-      form.reset();
-      setTimeout(() => (btn.textContent = original), 2200);
+
+      const accessKey = form.querySelector('input[name="access_key"]').value;
+      if (!accessKey || accessKey === 'YOUR_ACCESS_KEY_HERE') {
+        if (statusEl) {
+          statusEl.textContent = 'Form is not configured yet — add a Web3Forms access key.';
+          statusEl.classList.add('is-error');
+        }
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '$ sending...';
+      if (statusEl) {
+        statusEl.textContent = '';
+        statusEl.classList.remove('is-error', 'is-success');
+      }
+
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          headers: { Accept: 'application/json' },
+          body: new FormData(form)
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          btn.textContent = '$ message-sent ✓';
+          if (statusEl) {
+            statusEl.textContent = 'Thanks — your message is on its way. I\u2019ll reply soon.';
+            statusEl.classList.add('is-success');
+          }
+          form.reset();
+        } else {
+          throw new Error(data.message || 'Something went wrong');
+        }
+      } catch (err) {
+        btn.textContent = '$ send-message';
+        if (statusEl) {
+          statusEl.textContent = 'Could not send your message. Please try again or email me directly.';
+          statusEl.classList.add('is-error');
+        }
+      } finally {
+        btn.disabled = false;
+        setTimeout(() => {
+          btn.textContent = originalBtnText;
+        }, 2200);
+      }
     });
   }
 });

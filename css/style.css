@@ -876,6 +876,21 @@ button {
   color: var(--text-faint);
 }
 
+.m-form-status {
+  margin: 14px 0 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  min-height: 18px;
+}
+
+.m-form-status.is-success {
+  color: var(--accent-green);
+}
+
+.m-form-status.is-error {
+  color: var(--accent-red);
+}
+
 .m-contact-info {
   display: flex;
   flex-direction: column;
